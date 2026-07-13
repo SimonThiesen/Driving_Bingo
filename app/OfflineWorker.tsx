@@ -6,7 +6,10 @@ export function OfflineWorker() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       // Relative scope works both locally and under GitHub Pages' project path.
-      navigator.serviceWorker.register("./sw.js").catch(() => undefined);
+      navigator.serviceWorker
+        .register("./sw.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => undefined);
     }
   }, []);
 
