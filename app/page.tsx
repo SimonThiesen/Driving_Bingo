@@ -1,196 +1,413 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
+
+type Lang = "en" | "da";
+type GameType = "car" | "camper";
 type Cat = "classic" | "letters" | "countries" | "quiz" | "fun";
+type Localized = Record<Lang, string>;
 type Player = { id: string; name: string; color: string };
 type Task = {
   id: string;
   category: Cat;
-  title: string;
+  title: Localized;
   emoji: string;
   value: number;
-  detail?: string;
-  choices?: string[];
+  detail?: Localized;
+  choices?: Localized[];
   answer?: number;
 };
-const categories = [
+
+const t = (en: string, da: string): Localized => ({ en, da });
+const ui: Record<Lang, Record<string, string>> = {
+  en: {
+    brand: "Road Bingo",
+    introEyebrow: "THE CAR’S BEST GAME",
+    introTitle: "Road Bingo",
+    introCopy:
+      "A brilliant game for the whole car. Find it, claim it, and win the journey.",
+    car: "Car Bingo",
+    camper: "Campervan Bingo",
+    chooseGame: "Choose your road-trip game",
+    rules: "How to play",
+    rule1: "Choose a team, then pick a challenge from any category.",
+    rule2: "The first team to spot it claims the points.",
+    rule3: "Country plates give 1–4 points; a correct quiz answer gives 2.",
+    rule4: "Passengers play. The driver keeps eyes on the road.",
+    start: "Start game",
+    continue: "Continue game",
+    language: "Dansk",
+    back: "Back to start",
+    claimed: "challenges claimed",
+    reset: "Reset game",
+    fresh: "Fresh road trip, fresh bingo board!",
+    chooseTeam: "Choose your team",
+    teamHelp: "Tap a full team card to select it.",
+    classic: "Classic bingo",
+    classicDesc: "Vehicles, signs, nature & animals",
+    letters: "Plate alphabet",
+    lettersDesc: "Find every letter on licence plates",
+    countries: "Country cars",
+    countriesDesc: "23 country codes with bonus points",
+    quiz: "Road quiz",
+    quizDesc: "15 rules & geography questions",
+    fun: "Family fun",
+    funDesc: "Challenges for everyone",
+    points: "1 point · countries 1–4 points · quiz 2 points",
+    pick: "Pick a team, then tap a card when you spot it.",
+    again: "is back in play.",
+    owned: "That one already belongs to another team.",
+    scored: "scored for",
+    yours: "Yours! Tap to undo",
+    found: "found it",
+    wrong: "Not quite — have another think!",
+    plate: "On a licence plate",
+    quizPoints: "Correct answer = 2 points",
+    driver: "Driver rule:",
+    driverText:
+      "the driver never taps or searches. Let passengers play — safety wins every time.",
+    all: "all",
+    carLabel: "Car",
+    camperLabel: "Campervan",
+  },
+  da: {
+    brand: "Road Bingo",
+    introEyebrow: "BILTURENS BEDSTE SPIL",
+    introTitle: "Bil Bingo",
+    introCopy:
+      "Et sjovt spil for hele bilen. Find det, tag pointene og vind turen.",
+    car: "Bil Bingo",
+    camper: "Autocamper Bingo",
+    chooseGame: "Vælg jeres spil til køreturen",
+    rules: "Sådan spiller I",
+    rule1: "Vælg et hold og vælg derefter en udfordring fra en kategori.",
+    rule2: "Det første hold, der ser den, får pointene.",
+    rule3: "Landekoder giver 1–4 point; et rigtigt quizsvar giver 2.",
+    rule4: "Passagererne spiller. Chaufføren holder øjnene på vejen.",
+    start: "Start spil",
+    continue: "Fortsæt spil",
+    language: "English",
+    back: "Tilbage til start",
+    claimed: "udfordringer fundet",
+    reset: "Nulstil spil",
+    fresh: "Ny køretur, nyt bingokort!",
+    chooseTeam: "Vælg jeres hold",
+    teamHelp: "Tryk på hele holdkortet for at vælge.",
+    classic: "Klassisk bingo",
+    classicDesc: "Køretøjer, skilte, natur og dyr",
+    letters: "Nummerplade-alfabet",
+    lettersDesc: "Find alle bogstaver på nummerplader",
+    countries: "Landebiler",
+    countriesDesc: "23 landekoder med bonuspoint",
+    quiz: "Vejquiz",
+    quizDesc: "15 spørgsmål om regler og geografi",
+    fun: "Familiehygge",
+    funDesc: "Udfordringer for alle i bilen",
+    points: "1 point · lande 1–4 point · quiz 2 point",
+    pick: "Vælg et hold, og tryk på et kort, når I ser det.",
+    again: "er tilbage i spil.",
+    owned: "Den tilhører allerede et andet hold.",
+    scored: "gav point til",
+    yours: "Jeres! Tryk for at fortryde",
+    found: "fandt den",
+    wrong: "Ikke helt — tænk en gang mere!",
+    plate: "På en nummerplade",
+    quizPoints: "Rigtigt svar = 2 point",
+    driver: "Chaufførregel:",
+    driverText:
+      "Chaufføren trykker ikke og leder ikke. Lad passagererne spille — sikkerhed vinder altid.",
+    all: "alle",
+    carLabel: "Bil",
+    camperLabel: "Autocamper",
+  },
+};
+
+const categoryData: {
+  id: Cat;
+  emoji: string;
+  label: keyof typeof ui.en;
+  description: keyof typeof ui.en;
+  short: string;
+}[] = [
   {
     id: "classic",
-    label: "Classic bingo",
-    short: "Classic",
     emoji: "🔎",
-    description: "Vehicles, signs, nature & animals",
+    label: "classic",
+    description: "classicDesc",
+    short: "Classic",
   },
   {
     id: "letters",
-    label: "Plate alphabet",
-    short: "A–Z",
     emoji: "🔤",
-    description: "Find every letter on licence plates",
+    label: "letters",
+    description: "lettersDesc",
+    short: "A–Z",
   },
   {
     id: "countries",
-    label: "Country cars",
-    short: "Countries",
     emoji: "🌍",
-    description: "23 country codes with bonus points",
+    label: "countries",
+    description: "countriesDesc",
+    short: "Countries",
   },
   {
     id: "quiz",
-    label: "Road quiz",
-    short: "Quiz",
     emoji: "🧠",
-    description: "15 rules & geography questions",
+    label: "quiz",
+    description: "quizDesc",
+    short: "Quiz",
   },
   {
     id: "fun",
-    label: "Family fun",
-    short: "Fun",
     emoji: "🎉",
-    description: "Challenges for everyone in the car",
+    label: "fun",
+    description: "funDesc",
+    short: "Fun",
   },
-] as const;
+];
 const classic = [
-  ["Red car", "🚗"],
-  ["Motorcycle", "🏍️"],
-  ["Camper van", "🚐"],
-  ["Tractor", "🚜"],
-  ["Fire engine", "🚒"],
-  ["Bus", "🚌"],
-  ["Electric car charging", "🔌"],
-  ["Roadworks", "🚧"],
-  ["Roundabout sign", "🔄"],
-  ["Pedestrian crossing", "🚸"],
-  ["Speed limit sign", "🚦"],
-  ["Bridge", "🌉"],
-  ["Tunnel", "🚇"],
-  ["Wind turbine", "💨"],
-  ["Farm", "🚜"],
-  ["Lake or sea", "🌊"],
-  ["Forest", "🌲"],
-  ["Horse", "🐴"],
-  ["Cow", "🐄"],
-  ["Sheep", "🐑"],
-  ["Dog in a car", "🐶"],
-  ["Bird of prey", "🦅"],
-  ["Yellow flower field", "🌼"],
-  ["Church tower", "⛪"],
-  ["Big truck", "🚚"],
+  [t("Red car", "Rød bil"), "🚗"],
+  [t("Motorcycle", "Motorcykel"), "🏍️"],
+  [t("Camper van", "Autocamper"), "🚐"],
+  [t("Tractor", "Traktor"), "🚜"],
+  [t("Fire engine", "Brandbil"), "🚒"],
+  [t("Bus", "Bus"), "🚌"],
+  [t("Electric car charging", "Elbil til opladning"), "🔌"],
+  [t("Roadworks", "Vejarbejde"), "🚧"],
+  [t("Roundabout sign", "Rundkørselsskilt"), "🔄"],
+  [t("Pedestrian crossing", "Fodgængerfelt"), "🚸"],
+  [t("Speed limit sign", "Fartgrænseskilt"), "🚦"],
+  [t("Bridge", "Bro"), "🌉"],
+  [t("Tunnel", "Tunnel"), "🚇"],
+  [t("Wind turbine", "Vindmølle"), "💨"],
+  [t("Farm", "Gård"), "🚜"],
+  [t("Lake or sea", "Sø eller hav"), "🌊"],
+  [t("Forest", "Skov"), "🌲"],
+  [t("Horse", "Hest"), "🐴"],
+  [t("Cow", "Ko"), "🐄"],
+  [t("Sheep", "Får"), "🐑"],
+  [t("Dog in a car", "Hund i en bil"), "🐶"],
+  [t("Bird of prey", "Rovfugl"), "🦅"],
+  [t("Yellow flower field", "Gul blomstereng"), "🌼"],
+  [t("Church tower", "Kirketårn"), "⛪"],
+  [t("Big truck", "Stor lastbil"), "🚚"],
 ] as const;
 const countries = [
-  ["Denmark", "DK", "🇩🇰", 1],
-  ["Sweden", "S", "🇸🇪", 1],
-  ["Norway", "N", "🇳🇴", 1],
-  ["Germany", "D", "🇩🇪", 1],
-  ["Netherlands", "NL", "🇳🇱", 2],
-  ["Belgium", "B", "🇧🇪", 2],
-  ["France", "F", "🇫🇷", 2],
-  ["United Kingdom", "UK", "🇬🇧", 2],
-  ["Poland", "PL", "🇵🇱", 2],
-  ["Czechia", "CZ", "🇨🇿", 2],
-  ["Austria", "A", "🇦🇹", 2],
-  ["Switzerland", "CH", "🇨🇭", 2],
-  ["Italy", "I", "🇮🇹", 3],
-  ["Spain", "E", "🇪🇸", 3],
-  ["Portugal", "P", "🇵🇹", 3],
-  ["Ireland", "IRL", "🇮🇪", 3],
-  ["Finland", "FIN", "🇫🇮", 3],
-  ["Iceland", "IS", "🇮🇸", 3],
-  ["Estonia", "EST", "🇪🇪", 3],
-  ["Latvia", "LV", "🇱🇻", 3],
-  ["Lithuania", "LT", "🇱🇹", 3],
-  ["Croatia", "HR", "🇭🇷", 4],
-  ["Slovenia", "SLO", "🇸🇮", 4],
+  [t("Denmark", "Danmark"), "DK", "🇩🇰", 1],
+  [t("Sweden", "Sverige"), "S", "🇸🇪", 1],
+  [t("Norway", "Norge"), "N", "🇳🇴", 1],
+  [t("Germany", "Tyskland"), "D", "🇩🇪", 1],
+  [t("Netherlands", "Holland"), "NL", "🇳🇱", 2],
+  [t("Belgium", "Belgien"), "B", "🇧🇪", 2],
+  [t("France", "Frankrig"), "F", "🇫🇷", 2],
+  [t("United Kingdom", "Storbritannien"), "UK", "🇬🇧", 2],
+  [t("Poland", "Polen"), "PL", "🇵🇱", 2],
+  [t("Czechia", "Tjekkiet"), "CZ", "🇨🇿", 2],
+  [t("Austria", "Østrig"), "A", "🇦🇹", 2],
+  [t("Switzerland", "Schweiz"), "CH", "🇨🇭", 2],
+  [t("Italy", "Italien"), "I", "🇮🇹", 3],
+  [t("Spain", "Spanien"), "E", "🇪🇸", 3],
+  [t("Portugal", "Portugal"), "P", "🇵🇹", 3],
+  [t("Ireland", "Irland"), "IRL", "🇮🇪", 3],
+  [t("Finland", "Finland"), "FIN", "🇫🇮", 3],
+  [t("Iceland", "Island"), "IS", "🇮🇸", 3],
+  [t("Estonia", "Estland"), "EST", "🇪🇪", 3],
+  [t("Latvia", "Letland"), "LV", "🇱🇻", 3],
+  [t("Lithuania", "Litauen"), "LT", "🇱🇹", 3],
+  [t("Croatia", "Kroatien"), "HR", "🇭🇷", 4],
+  [t("Slovenia", "Slovenien"), "SLO", "🇸🇮", 4],
 ] as const;
 const quiz = [
   [
-    "What does a red traffic light mean?",
-    ["Slow down", "Stop", "Go if clear"],
-    1,
-  ],
-  [
-    "Which side of the road do cars drive on in Denmark?",
-    ["Right", "Left", "Both"],
-    0,
-  ],
-  [
-    "What should everyone wear before the car moves?",
-    ["A hat", "A seat belt", "Sunglasses"],
-    1,
-  ],
-  [
-    "What shape is a warning road sign in most of Europe?",
-    ["Triangle", "Circle", "Square"],
-    0,
-  ],
-  [
-    "What does a blue P sign usually mean?",
-    ["Petrol", "Parking", "Playground"],
-    1,
-  ],
-  ["Which country is famous for fjords?", ["Norway", "Spain", "Belgium"], 0],
-  [
-    "What should the driver do before changing lane?",
-    ["Check mirrors and look", "Honk twice", "Speed up"],
-    0,
-  ],
-  [
-    "What does a zebra crossing help people do?",
-    ["Park", "Cross the road", "Ride bikes"],
-    1,
-  ],
-  [
-    "Which is the longest river in Europe?",
-    ["The Volga", "The Thames", "The Danube"],
-    0,
-  ],
-  [
-    "What is a roundabout for?",
-    ["Turning safely at a junction", "Washing cars", "Finding petrol"],
-    0,
-  ],
-  [
-    "If an emergency vehicle has flashing blue lights, what should cars do?",
-    ["Make space safely", "Race it", "Ignore it"],
-    0,
-  ],
-  ["Which direction does the sun set?", ["East", "West", "North"], 1],
-  ["What is the capital city of Sweden?", ["Stockholm", "Oslo", "Helsinki"], 0],
-  [
-    "What colour are motorway direction signs in Denmark?",
-    ["Blue", "Pink", "Purple"],
-    0,
-  ],
-  [
-    "Why is it important not to distract the driver?",
+    t("What does a red traffic light mean?", "Hvad betyder et rødt trafiklys?"),
     [
-      "It helps everyone travel safely",
-      "It makes the car faster",
-      "It finds more snacks",
+      t("Slow down", "Sæt farten ned"),
+      t("Stop", "Stop"),
+      t("Go if clear", "Kør hvis der er frit"),
+    ],
+    1,
+  ],
+  [
+    t(
+      "Which side of the road do cars drive on in Denmark?",
+      "Hvilken side af vejen kører man i Danmark?",
+    ),
+    [t("Right", "Højre"), t("Left", "Venstre"), t("Both", "Begge")],
+    0,
+  ],
+  [
+    t(
+      "What should everyone wear before the car moves?",
+      "Hvad skal alle have på, før bilen kører?",
+    ),
+    [
+      t("A hat", "En hat"),
+      t("A seat belt", "En sele"),
+      t("Sunglasses", "Solbriller"),
+    ],
+    1,
+  ],
+  [
+    t(
+      "What shape is a warning road sign in most of Europe?",
+      "Hvilken form har et advarselsskilt i det meste af Europa?",
+    ),
+    [t("Triangle", "Trekant"), t("Circle", "Cirkel"), t("Square", "Firkant")],
+    0,
+  ],
+  [
+    t(
+      "What does a blue P sign usually mean?",
+      "Hvad betyder et blåt P-skilt som regel?",
+    ),
+    [
+      t("Petrol", "Benzin"),
+      t("Parking", "Parkering"),
+      t("Playground", "Legeplads"),
+    ],
+    1,
+  ],
+  [
+    t(
+      "Which country is famous for fjords?",
+      "Hvilket land er kendt for fjorde?",
+    ),
+    [t("Norway", "Norge"), t("Spain", "Spanien"), t("Belgium", "Belgien")],
+    0,
+  ],
+  [
+    t(
+      "What should the driver do before changing lane?",
+      "Hvad skal chaufføren gøre før et vognbaneskift?",
+    ),
+    [
+      t("Check mirrors and look", "Tjekke spejle og kigge"),
+      t("Honk twice", "Dytte to gange"),
+      t("Speed up", "Sætte farten op"),
+    ],
+    0,
+  ],
+  [
+    t(
+      "What does a zebra crossing help people do?",
+      "Hvad hjælper et fodgængerfelt folk med?",
+    ),
+    [
+      t("Park", "Parkere"),
+      t("Cross the road", "Krydse vejen"),
+      t("Ride bikes", "Cykle"),
+    ],
+    1,
+  ],
+  [
+    t(
+      "Which is the longest river in Europe?",
+      "Hvilken er Europas længste flod?",
+    ),
+    [
+      t("The Volga", "Volga"),
+      t("The Thames", "Themsen"),
+      t("The Danube", "Donau"),
+    ],
+    0,
+  ],
+  [
+    t("What is a roundabout for?", "Hvad er en rundkørsel til for?"),
+    [
+      t("Turning safely at a junction", "At dreje sikkert i et kryds"),
+      t("Washing cars", "At vaske biler"),
+      t("Finding petrol", "At finde benzin"),
+    ],
+    0,
+  ],
+  [
+    t(
+      "If an emergency vehicle has flashing blue lights, what should cars do?",
+      "Hvis et udrykningskøretøj har blinkende blåt lys, hvad skal bilerne så gøre?",
+    ),
+    [
+      t("Make space safely", "Give plads på en sikker måde"),
+      t("Race it", "Køre om kap"),
+      t("Ignore it", "Ignorere det"),
+    ],
+    0,
+  ],
+  [
+    t("Which direction does the sun set?", "Hvilken retning går solen ned i?"),
+    [t("East", "Øst"), t("West", "Vest"), t("North", "Nord")],
+    1,
+  ],
+  [
+    t("What is the capital city of Sweden?", "Hvad hedder Sveriges hovedstad?"),
+    [t("Stockholm", "Stockholm"), t("Oslo", "Oslo"), t("Helsinki", "Helsinki")],
+    0,
+  ],
+  [
+    t(
+      "What colour are motorway direction signs in Denmark?",
+      "Hvilken farve har motorvejsskilte i Danmark?",
+    ),
+    [t("Blue", "Blå"), t("Pink", "Lyserød"), t("Purple", "Lilla")],
+    0,
+  ],
+  [
+    t(
+      "Why is it important not to distract the driver?",
+      "Hvorfor er det vigtigt ikke at forstyrre chaufføren?",
+    ),
+    [
+      t(
+        "It helps everyone travel safely",
+        "Det hjælper alle med at rejse sikkert",
+      ),
+      t("It makes the car faster", "Det gør bilen hurtigere"),
+      t("It finds more snacks", "Det finder flere snacks"),
     ],
     0,
   ],
 ] as const;
 const fun = [
-  ["Tell a silly joke", "😄"],
-  ["Name three things that are blue", "🔵"],
-  ["Make your best animal sound", "🦁"],
-  ["Sing one chorus together", "🎵"],
-  ["Wave at a friendly driver", "👋"],
-  ["Find a cloud shaped like something", "☁️"],
-  ["Count 10 red cars", "🔴"],
-  ["Say a tongue twister", "👅"],
-  ["Everyone names a favourite snack", "🍎"],
-  ["Spot the first star", "⭐"],
-  ["Make up a new road-trip rule", "📜"],
-  ["Guess the next town name", "🗺️"],
-  ["Tell a story using three things you see", "📖"],
-  ["Everyone does a secret handshake", "🤝"],
-  ["Name five animals", "🐾"],
-  ["Find something shaped like a circle", "⭕"],
-  ["Choose the next music track together", "🎶"],
-  ["Say thank you to the driver", "💛"],
-  ["Try not to say ‘are we there?’ for 10 minutes", "🤫"],
-  ["Give someone a kind compliment", "💬"],
+  [t("Tell a silly joke", "Fortæl en fjollet joke"), "😄"],
+  [t("Name three things that are blue", "Nævn tre ting der er blå"), "🔵"],
+  [t("Make your best animal sound", "Lav din bedste dyrelyd"), "🦁"],
+  [t("Sing one chorus together", "Syng et omkvæd sammen"), "🎵"],
+  [t("Wave at a friendly driver", "Vink til en venlig chauffør"), "👋"],
+  [
+    t("Find a cloud shaped like something", "Find en sky, der ligner noget"),
+    "☁️",
+  ],
+  [t("Count 10 red cars", "Tæl 10 røde biler"), "🔴"],
+  [t("Say a tongue twister", "Sig en tungebrækker"), "👅"],
+  [t("Everyone names a favourite snack", "Alle nævner en yndlingssnack"), "🍎"],
+  [t("Spot the first star", "Se den første stjerne"), "⭐"],
+  [t("Make up a new road-trip rule", "Find på en ny regel til turen"), "📜"],
+  [t("Guess the next town name", "Gæt navnet på den næste by"), "🗺️"],
+  [
+    t(
+      "Tell a story using three things you see",
+      "Fortæl en historie med tre ting I ser",
+    ),
+    "📖",
+  ],
+  [
+    t("Everyone does a secret handshake", "Alle laver et hemmeligt håndtryk"),
+    "🤝",
+  ],
+  [t("Name five animals", "Nævn fem dyr"), "🐾"],
+  [t("Find something shaped like a circle", "Find noget, der er rundt"), "⭕"],
+  [
+    t("Choose the next music track together", "Vælg den næste sang sammen"),
+    "🎶",
+  ],
+  [t("Say thank you to the driver", "Sig tak til chaufføren"), "💛"],
+  [
+    t(
+      "Try not to say ‘are we there?’ for 10 minutes",
+      "Prøv ikke at sige ‘er vi der snart?’ i 10 minutter",
+    ),
+    "🤫",
+  ],
+  [t("Give someone a kind compliment", "Giv nogen et sødt kompliment"), "💬"],
 ] as const;
 const tasks: Task[] = [
   ...classic.map(([title, emoji], i) => ({
@@ -205,9 +422,9 @@ const tasks: Task[] = [
     .map((letter) => ({
       id: `letter-${letter}`,
       category: "letters" as const,
-      title: `Find the letter ${letter}`,
+      title: t(`Find the letter ${letter}`, `Find bogstavet ${letter}`),
       emoji: letter,
-      detail: "On a licence plate",
+      detail: t("On a licence plate", "På en nummerplade"),
       value: 1,
     })),
   ...countries.map(([title, code, emoji, value]) => ({
@@ -215,7 +432,10 @@ const tasks: Task[] = [
     category: "countries" as const,
     title,
     emoji,
-    detail: `Spot ${code} on a licence plate`,
+    detail: t(
+      `Spot ${code} on a licence plate`,
+      `Se ${code} på en nummerplade`,
+    ),
     value,
   })),
   ...quiz.map(([title, choices, answer], i) => ({
@@ -223,7 +443,7 @@ const tasks: Task[] = [
     category: "quiz" as const,
     title,
     emoji: "?",
-    detail: "Correct answer = 2 points",
+    detail: t("Correct answer = 2 points", "Rigtigt svar = 2 point"),
     value: 2,
     choices: [...choices],
     answer,
@@ -241,186 +461,237 @@ const defaultPlayers: Player[] = [
   { id: "ocean", name: "Team Ocean", color: "#3157b7" },
   { id: "forest", name: "Team Forest", color: "#338b65" },
 ];
-const key = "road-bingo-v1";
+const storageKey = "road-bingo-v2";
+
 export default function Home() {
-  const [cat, setCat] = useState<Cat>("classic"),
-    [players, setPlayers] = useState(defaultPlayers),
-    [active, setActive] = useState(defaultPlayers[0].id),
-    [done, setDone] = useState<Record<string, string>>({}),
-    [ready, setReady] = useState(false),
-    [message, setMessage] = useState(
-      "Pick a team, then tap a card when you spot it.",
-    );
+  const [lang, setLang] = useState<Lang>("en");
+  const [gameType, setGameType] = useState<GameType>("car");
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [cat, setCat] = useState<Cat>("classic");
+  const [players, setPlayers] = useState<Player[]>(defaultPlayers);
+  const [active, setActive] = useState(defaultPlayers[0].id);
+  const [done, setDone] = useState<Record<string, string>>({});
+  const [ready, setReady] = useState(false);
+  const words = ui[lang];
+  const [message, setMessage] = useState(words.pick);
+
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(key);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
-        const p = JSON.parse(saved) as {
+        const state = JSON.parse(saved) as {
           players?: Player[];
           active?: string;
           done?: Record<string, string>;
+          lang?: Lang;
+          gameType?: GameType;
         };
-        if (p.players?.length) setPlayers(p.players.slice(0, 4));
-        if (p.active) setActive(p.active);
-        if (p.done) setDone(p.done);
+        if (state.players?.length) setPlayers(state.players.slice(0, 3));
+        if (state.active) setActive(state.active);
+        if (state.done) setDone(state.done);
+        if (state.lang === "en" || state.lang === "da") setLang(state.lang);
+        if (state.gameType === "car" || state.gameType === "camper")
+          setGameType(state.gameType);
       }
     } catch {
-      setMessage("Your game will stay in this tab for now.");
+      /* Local storage is optional. */
     }
-    if ("serviceWorker" in navigator)
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     setReady(true);
   }, []);
   useEffect(() => {
     if (ready)
       try {
-        localStorage.setItem(key, JSON.stringify({ players, active, done }));
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({ players, active, done, lang, gameType }),
+        );
       } catch {
         /* Game play does not depend on storage. */
       }
-  }, [active, done, players, ready]);
-  const shown = tasks.filter((t) => t.category === cat),
-    scores = useMemo(
-      () =>
-        players.map((p) => ({
-          ...p,
-          score: tasks
-            .filter((t) => done[t.id] === p.id)
-            .reduce((n, t) => n + t.value, 0),
-        })),
-      [done, players],
-    );
+  }, [active, done, gameType, lang, players, ready]);
+  useEffect(() => {
+    setMessage(words.pick);
+  }, [lang, words.pick]);
+  const shown = tasks.filter((task) => task.category === cat);
+  const scores = useMemo(
+    () =>
+      players.map((player) => ({
+        ...player,
+        score: tasks
+          .filter((task) => done[task.id] === player.id)
+          .reduce((sum, task) => sum + task.value, 0),
+      })),
+    [done, players],
+  );
+  const current = categoryData.find((category) => category.id === cat)!;
   const claim = (task: Task) => {
     const owner = done[task.id];
     if (owner === active) {
-      setDone(({ [task.id]: _, ...rest }) => rest);
-      setMessage(`${task.title} is back in play.`);
-    } else if (owner) setMessage("That one already belongs to another team.");
+      setDone(({ [task.id]: _removed, ...rest }) => rest);
+      setMessage(`${task.title[lang]} ${words.again}`);
+    } else if (owner) setMessage(words.owned);
     else {
-      setDone((prev) => ({ ...prev, [task.id]: active }));
-      setMessage(
-        `${task.title}: scored for ${players.find((p) => p.id === active)?.name ?? "your team"}!`,
-      );
+      const player = players.find((item) => item.id === active)?.name ?? "";
+      setDone((previous) => ({ ...previous, [task.id]: active }));
+      setMessage(`${task.title[lang]} ${words.scored} ${player}!`);
     }
   };
-  const rename = (id: string, name: string) => {
-    const clean = name
-      .replace(/[^\p{L}\p{N} .'-]/gu, "")
-      .slice(0, 18)
-      .trim();
-    setPlayers((all) =>
-      all.map((p) => (p.id === id ? { ...p, name: clean || "Road team" } : p)),
-    );
+  const start = (type: GameType) => {
+    setGameType(type);
+    setShowWelcome(false);
+    setMessage(words.pick);
   };
-  const current = categories.find((c) => c.id === cat)!;
+  if (showWelcome)
+    return (
+      <main className="welcome-page">
+        <section className="welcome-hero">
+          <img src="./og.png" alt="Illustrated Road Bingo road trip" />
+          <div className="welcome-shade" />
+          <div className="welcome-language">
+            <button
+              type="button"
+              onClick={() => setLang(lang === "en" ? "da" : "en")}
+            >
+              🌐 {words.language}
+            </button>
+          </div>
+          <div className="welcome-copy">
+            <p className="eyebrow">{words.introEyebrow}</p>
+            <h1>{words.introTitle}</h1>
+            <p>{words.introCopy}</p>
+          </div>
+        </section>
+        <section className="welcome-content">
+          <div className="game-picker">
+            <p className="eyebrow">{words.chooseGame}</p>
+            <div className="start-actions">
+              <button
+                type="button"
+                className="start-card car-start"
+                onClick={() => start("car")}
+              >
+                <span>🚗</span>
+                <b>{words.car}</b>
+                <small>{words.start}</small>
+              </button>
+              <button
+                type="button"
+                className="start-card camper-start"
+                onClick={() => start("camper")}
+              >
+                <span>🚐</span>
+                <b>{words.camper}</b>
+                <small>{words.start}</small>
+              </button>
+            </div>
+          </div>
+          <section className="rules" aria-labelledby="rules-title">
+            <div>
+              <p className="eyebrow">{words.brand.toUpperCase()}</p>
+              <h2 id="rules-title">{words.rules}</h2>
+            </div>
+            <ol>
+              <li>{words.rule1}</li>
+              <li>{words.rule2}</li>
+              <li>{words.rule3}</li>
+              <li>{words.rule4}</li>
+            </ol>
+          </section>
+        </section>
+      </main>
+    );
   return (
     <main>
-      <section className="hero" aria-labelledby="app-title">
-        <div className="hero-copy">
-          <p className="eyebrow">THE CAR’S BEST GAME</p>
-          <h1 id="app-title">
-            Road <span>Bingo</span>
-          </h1>
-          <p className="hero-text">Find it. Claim it. Win the road trip.</p>
-          <div className="hero-badges">
-            <span>✦ 109 challenges</span>
-            <span>◌ works offline</span>
-            <span>♡ no accounts</span>
-          </div>
-        </div>
-        <div className="road-art" aria-hidden="true">
-          <div className="sun" />
-          <div className="cloud cloud-one" />
-          <div className="cloud cloud-two" />
-          <div className="hill hill-back" />
-          <div className="hill hill-front" />
-          <div className="road">
-            <i />
-            <i />
-            <i />
-          </div>
-          <div className="car">
-            <b>●</b>
-            <b>●</b>
-            <span>▭</span>
-          </div>
-          <div className="tree tree-one">♠</div>
-          <div className="tree tree-two">♠</div>
-        </div>
-      </section>
-      <section className="game-shell" aria-label="Road Bingo game">
+      <header className="game-header">
+        <button
+          type="button"
+          className="brand-button"
+          onClick={() => setShowWelcome(true)}
+        >
+          ← {words.back}
+        </button>
+        <p>
+          <b>{gameType === "camper" ? words.camperLabel : words.carLabel}</b> ·{" "}
+          {words.brand}
+        </p>
+        <button
+          type="button"
+          className="language-button"
+          onClick={() => setLang(lang === "en" ? "da" : "en")}
+        >
+          🌐 {words.language}
+        </button>
+      </header>
+      <section className="game-shell" aria-label={words.brand}>
         <div className="game-topline">
           <p>
-            <strong>{Object.keys(done).length}</strong> of {tasks.length}{" "}
-            challenges claimed
+            <strong>{Object.keys(done).length}</strong> / {tasks.length}{" "}
+            {words.claimed}
           </p>
           <button
             className="reset-button"
             type="button"
             onClick={() => {
               setDone({});
-              setMessage("Fresh road trip, fresh bingo board!");
+              setMessage(words.fresh);
             }}
           >
-            Reset game
+            {words.reset}
           </button>
         </div>
         <section className="team-panel">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">WHO’S PLAYING?</p>
-              <h2>Pick your team</h2>
+              <p className="eyebrow">{words.chooseTeam.toUpperCase()}</p>
+              <h2>{words.chooseTeam}</h2>
             </div>
-            <p className="tiny-note">Names only live on this device.</p>
+            <p className="tiny-note">{words.teamHelp}</p>
           </div>
           <div className="teams">
-            {players.map((p) => {
-              const score = scores.find((s) => s.id === p.id)?.score ?? 0;
+            {players.map((player) => {
+              const score =
+                scores.find((item) => item.id === player.id)?.score ?? 0;
               return (
-                <div
-                  className={`team ${active === p.id ? "is-active" : ""}`}
-                  style={{ "--team": p.color } as React.CSSProperties}
-                  key={p.id}
+                <button
+                  className={`team ${active === player.id ? "is-active" : ""}`}
+                  style={{ "--team": player.color } as React.CSSProperties}
+                  type="button"
+                  onClick={() => setActive(player.id)}
+                  key={player.id}
+                  aria-pressed={active === player.id}
                 >
-                  <button
-                    className="team-select"
-                    type="button"
-                    aria-label={`Play as ${p.name}`}
-                    aria-pressed={active === p.id}
-                    onClick={() => setActive(p.id)}
-                  >
-                    <span className="team-dot">★</span>
-                  </button>
-                  <span className="team-name">
-                    <input
-                      aria-label={`${p.name} name`}
-                      value={p.name}
-                      maxLength={18}
-                      onChange={(e) => rename(p.id, e.target.value)}
-                    />
-                  </span>
+                  <span className="team-dot">★</span>
+                  <span className="team-name">{player.name}</span>
                   <strong>
                     {score}
                     <small> pts</small>
                   </strong>
-                </div>
+                </button>
               );
             })}
           </div>
         </section>
         <nav className="category-nav" aria-label="Game categories">
-          {categories.map((c) => (
+          {categoryData.map((category) => (
             <button
-              key={c.id}
+              key={category.id}
               type="button"
-              className={cat === c.id ? "is-selected" : ""}
-              onClick={() => setCat(c.id)}
+              className={cat === category.id ? "is-selected" : ""}
+              onClick={() => setCat(category.id)}
             >
-              <span>{c.emoji}</span>
-              <b>{c.short}</b>
+              <span>{category.emoji}</span>
+              <b>
+                {category.id === "letters"
+                  ? category.short
+                  : words[category.label]}
+              </b>
               <small>
-                {tasks.filter((t) => t.category === c.id && done[t.id]).length}/
-                {tasks.filter((t) => t.category === c.id).length}
+                {
+                  tasks.filter(
+                    (task) => task.category === category.id && done[task.id],
+                  ).length
+                }
+                /{tasks.filter((task) => task.category === category.id).length}
               </small>
             </button>
           ))}
@@ -428,12 +699,10 @@ export default function Home() {
         <section className="board">
           <div className="board-heading">
             <div>
-              <p className="eyebrow">{current.label.toUpperCase()}</p>
-              <h2>{current.description}</h2>
+              <p className="eyebrow">{words[current.label].toUpperCase()}</p>
+              <h2>{words[current.description]}</h2>
             </div>
-            <p className="points-key">
-              ⭐ 1 point · 🌍 1–4 points · 🧠 2 points
-            </p>
+            <p className="points-key">⭐ {words.points}</p>
           </div>
           <p className="status" aria-live="polite">
             {message}
@@ -441,10 +710,10 @@ export default function Home() {
           <div
             className={`task-grid ${cat === "letters" ? "letter-grid" : ""}`}
           >
-            {shown.map((t) => {
-              const owner = done[t.id],
-                winner = players.find((p) => p.id === owner),
-                mine = owner === active;
+            {shown.map((task) => {
+              const owner = done[task.id];
+              const winner = players.find((player) => player.id === owner);
+              const mine = owner === active;
               return (
                 <article
                   className={`task-card ${owner ? "is-claimed" : ""}`}
@@ -453,39 +722,39 @@ export default function Home() {
                       ? ({ "--claim": winner.color } as React.CSSProperties)
                       : undefined
                   }
-                  key={t.id}
+                  key={task.id}
                 >
                   <button
                     type="button"
                     className="task-main"
-                    onClick={() => (t.choices ? undefined : claim(t))}
+                    onClick={() => (task.choices ? undefined : claim(task))}
                     aria-label={
                       owner
-                        ? `${t.title}, claimed by ${winner?.name}`
-                        : `Claim ${t.title}`
+                        ? `${task.title[lang]}, ${words.found} ${winner?.name}`
+                        : task.title[lang]
                     }
                   >
-                    <span className="task-icon">{t.emoji}</span>
+                    <span className="task-icon">{task.emoji}</span>
                     <span className="task-copy">
-                      <b>{t.title}</b>
-                      {t.detail && <small>{t.detail}</small>}
+                      <b>{task.title[lang]}</b>
+                      {task.detail && <small>{task.detail[lang]}</small>}
                     </span>
-                    <span className="value">{t.value}★</span>
+                    <span className="value">{task.value}★</span>
                   </button>
-                  {t.choices && (
+                  {task.choices && (
                     <div className="quiz-choices">
-                      {t.choices.map((choice, i) => (
+                      {task.choices.map((choice, index) => (
                         <button
                           type="button"
-                          key={choice}
+                          key={choice.en}
                           disabled={Boolean(owner)}
                           onClick={() =>
-                            i === t.answer
-                              ? claim(t)
-                              : setMessage("Not quite — have another think!")
+                            index === task.answer
+                              ? claim(task)
+                              : setMessage(words.wrong)
                           }
                         >
-                          {choice}
+                          {choice[lang]}
                         </button>
                       ))}
                     </div>
@@ -493,7 +762,7 @@ export default function Home() {
                   {owner && (
                     <div className="claimed-by">
                       <span style={{ background: winner?.color }} />
-                      {mine ? "Yours! Tap to undo" : `${winner?.name} found it`}
+                      {mine ? words.yours : `${winner?.name} ${words.found}`}
                     </div>
                   )}
                 </article>
@@ -504,8 +773,7 @@ export default function Home() {
         <section className="safety-note">
           <span>🧡</span>
           <p>
-            <strong>Driver rule:</strong> the driver never taps or searches. Let
-            passengers play — safety wins every time.
+            <strong>{words.driver}</strong> {words.driverText}
           </p>
         </section>
       </section>

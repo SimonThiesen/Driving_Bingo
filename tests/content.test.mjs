@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("ships the requested offline game content without remote data calls", async () => {
-  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-  assert.match(source, /109 challenges/);
+test("ships bilingual game content without remote data calls", async () => {
+  const [source, worker] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/OfflineWorker.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(source, /Autocamper Bingo/);
+  assert.match(source, /Road Bingo/);
   assert.match(source, /localStorage/);
-  assert.match(source, /serviceWorker/);
+  assert.match(worker, /serviceWorker/);
   assert.doesNotMatch(source, /https?:\/\//);
 });

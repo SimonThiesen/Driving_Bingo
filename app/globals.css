@@ -640,3 +640,231 @@ button {
     display: none;
   }
 }
+
+/* Welcome screen and the game shell deliberately use normal document flow: the
+   progress counter must never sit underneath the blue hero artwork. */
+.welcome-page {
+  min-height: 100vh;
+  background: #fffaf0;
+}
+.welcome-hero {
+  min-height: min(67vw, 630px);
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  align-items: end;
+  color: white;
+  isolation: isolate;
+}
+.welcome-hero > img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.welcome-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, #10204ac9 0%, #10204a3d 57%, transparent);
+}
+.welcome-copy {
+  width: min(690px, 100%);
+  padding: clamp(34px, 7vw, 82px);
+  padding-top: 130px;
+}
+.welcome-copy h1 {
+  margin: 0;
+  font-size: clamp(3.5rem, 9vw, 7.2rem);
+  letter-spacing: -0.08em;
+  line-height: 0.8;
+  font-weight: 1000;
+  text-shadow: 0 4px 0 #17264c66;
+}
+.welcome-copy > p:last-child {
+  max-width: 440px;
+  margin: 22px 0 0;
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  line-height: 1.45;
+  font-weight: 800;
+}
+.welcome-language,
+.game-header {
+  position: absolute;
+  top: 20px;
+  right: max(24px, 5vw);
+}
+.welcome-language button,
+.language-button,
+.brand-button {
+  padding: 9px 13px;
+  border: 1px solid #ffffff6b;
+  border-radius: 99px;
+  color: white;
+  background: #17264c9c;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+.welcome-content {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 26px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 30px 24px 72px;
+}
+.game-picker,
+.rules {
+  padding: clamp(22px, 4vw, 38px);
+  border: 1px solid #e9e1d0;
+  border-radius: 25px;
+  background: #fffdf8;
+  box-shadow: 0 12px 30px #14254b0b;
+}
+.start-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 13px;
+  margin-top: 18px;
+}
+.start-card {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  min-height: 155px;
+  padding: 20px;
+  border: 0;
+  border-radius: 20px;
+  color: white;
+  text-align: left;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.start-card:hover,
+.start-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px #17264c25;
+}
+.start-card span {
+  font-size: 2.1rem;
+}
+.start-card b {
+  font-size: 1.22rem;
+}
+.start-card small {
+  margin-top: auto;
+  font-weight: 900;
+  opacity: 0.88;
+}
+.car-start {
+  background: #3157b7;
+}
+.camper-start {
+  background: #338b65;
+}
+.rules h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.05em;
+}
+.rules ol {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rules;
+}
+.rules li {
+  display: grid;
+  grid-template-columns: 29px 1fr;
+  gap: 10px;
+  align-items: start;
+  color: #50607d;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 700;
+}
+.rules li::before {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: white;
+  background: #ff6b5f;
+  counter-increment: rules;
+  content: counter(rules);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+.game-header {
+  position: static;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 68px;
+  padding: 12px max(5vw, 24px);
+  color: white;
+  background: #3157b7;
+}
+.game-header > p {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.game-header .brand-button {
+  background: transparent;
+}
+.game-shell {
+  margin: 0 auto;
+  padding-top: 0;
+}
+.game-topline {
+  min-height: 58px;
+  padding: 10px 4px;
+}
+.game-topline p {
+  margin: 0;
+}
+.team {
+  width: 100%;
+  cursor: pointer;
+}
+.team:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
+}
+.team-name {
+  min-width: 0;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+@media (max-width: 760px) {
+  .welcome-hero {
+    min-height: 535px;
+  }
+  .welcome-hero > img {
+    object-position: 57% center;
+  }
+  .welcome-shade {
+    background: linear-gradient(0deg, #10204ad9 0%, #10204a23 100%);
+  }
+  .welcome-copy {
+    padding: 110px 25px 38px;
+  }
+  .welcome-content {
+    grid-template-columns: 1fr;
+    padding: 16px 13px 48px;
+  }
+  .game-header {
+    padding: 10px 13px;
+  }
+  .game-header > p {
+    display: none;
+  }
+}
