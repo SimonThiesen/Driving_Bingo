@@ -697,8 +697,6 @@ button {
   top: 20px;
   right: max(24px, 5vw);
 }
-.welcome-language button,
-.language-button,
 .brand-button {
   padding: 9px 13px;
   border: 1px solid #ffffff6b;
@@ -707,6 +705,37 @@ button {
   background: #17264c9c;
   font-size: 0.8rem;
   font-weight: 900;
+}
+.language-switch {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #cfd7e7;
+  border-radius: 999px;
+  background: white;
+}
+.language-switch button {
+  min-width: 42px;
+  padding: 9px 11px;
+  border: 0;
+  color: #64718a;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 1000;
+}
+.language-switch button.is-active {
+  color: white;
+  background: #3157b7;
+}
+.language-switch.is-dark {
+  border-color: #ffffff6b;
+  background: #17264c9c;
+}
+.language-switch.is-dark button {
+  color: #dfe8ff;
+}
+.language-switch.is-dark button.is-active {
+  color: #17264c;
+  background: #f8bd34;
 }
 .welcome-content {
   display: grid;

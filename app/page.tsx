@@ -69,6 +69,10 @@ const ui: Record<Lang, Record<string, string>> = {
     all: "all",
     carLabel: "Car",
     camperLabel: "Campervan",
+    camperClassic: "Camper & campsite",
+    camperClassicDesc: "Motorhomes, camping gear & campsite finds",
+    camperFun: "Campsite fun",
+    camperFunDesc: "Challenges made for life at the campsite",
   },
   da: {
     brand: "Road Bingo",
@@ -119,6 +123,10 @@ const ui: Record<Lang, Record<string, string>> = {
     all: "alle",
     carLabel: "Bil",
     camperLabel: "Autocamper",
+    camperClassic: "Autocamper & campingplads",
+    camperClassicDesc: "Autocampere, campingudstyr og ting på pladsen",
+    camperFun: "Campinghygge",
+    camperFunDesc: "Udfordringer, der passer til livet på campingpladsen",
   },
 };
 
@@ -409,6 +417,76 @@ const fun = [
   ],
   [t("Give someone a kind compliment", "Giv nogen et sødt kompliment"), "💬"],
 ] as const;
+const camperClassic = [
+  [t("Motorhome", "Autocamper"), "🚐"],
+  [t("Caravan", "Campingvogn"), "🚙"],
+  [t("Camping site sign", "Campingpladsskilt"), "⛺"],
+  [t("Reception building", "Reception"), "🏕️"],
+  [t("Tent", "Telt"), "⛺"],
+  [t("Awning", "Fortelt"), "🏖️"],
+  [t("Camp chairs", "Campingstole"), "🪑"],
+  [t("Picnic table", "Bord-bænkesæt"), "🧺"],
+  [t("Bicycle rack", "Cykelholder"), "🚲"],
+  [t("Motorhome service point", "Serviceplads til autocamper"), "🚰"],
+  [t("Electric hookup", "El-tilslutning"), "🔌"],
+  [t("Shower building", "Badebygning"), "🚿"],
+  [t("Playground", "Legeplads"), "🛝"],
+  [t("Swimming pool", "Swimmingpool"), "🏊"],
+  [t("Barbecue", "Grill"), "🍖"],
+  [t("Cool box", "Køleboks"), "🧊"],
+  [t("Washing line", "Tørresnor"), "👕"],
+  [t("Camping dog", "Campinghund"), "🐕"],
+  [t("Someone cooking outside", "Nogen der laver mad udenfor"), "🍳"],
+  [t("Map of the campsite", "Kort over campingpladsen"), "🗺️"],
+  [t("Flagpole", "Flagstang"), "🚩"],
+  [t("Campfire", "Lejrbål"), "🔥"],
+  [t("Lake, sea or beach", "Sø, hav eller strand"), "🌊"],
+  [t("Ice cream stand", "Isbod"), "🍦"],
+  [
+    t(
+      "Another family from a different country",
+      "En anden familie fra et andet land",
+    ),
+    "🌍",
+  ],
+] as const;
+const camperFun = [
+  [t("Set up a camp chair", "Sæt en campingstol op"), "🪑"],
+  [t("Help set the table", "Hjælp med at dække bord"), "🍽️"],
+  [
+    t("Find five different tent colours", "Find fem forskellige teltfarver"),
+    "🌈",
+  ],
+  [t("Play a quiet card game", "Spil et stille kortspil"), "🃏"],
+  [
+    t("Make a nature picture from leaves", "Lav et naturbillede af blade"),
+    "🍂",
+  ],
+  [t("Say hello to a camping neighbour", "Sig hej til en campingnabo"), "👋"],
+  [t("Choose a family walk", "Vælg en familiegåtur"), "🥾"],
+  [t("Spot three birds", "Find tre fugle"), "🐦"],
+  [t("Help pack the day bag", "Hjælp med at pakke tasken"), "🎒"],
+  [t("Invent a campsite mascot", "Find på en campingmaskot"), "🦊"],
+  [
+    t("Tell a story around the table", "Fortæl en historie rundt om bordet"),
+    "📖",
+  ],
+  [t("Do a treasure hunt", "Lav en skattejagt"), "🗺️"],
+  [
+    t("Find something soft, rough and smooth", "Find noget blødt, ru og glat"),
+    "🖐️",
+  ],
+  [t("Draw your motorhome or tent", "Tegn jeres autocamper eller telt"), "🎨"],
+  [t("Choose a song for dinner", "Vælg en sang til aftensmaden"), "🎵"],
+  [t("Learn a word in another language", "Lær et ord på et andet sprog"), "💬"],
+  [
+    t("Give someone a campsite compliment", "Giv nogen et campingkompliment"),
+    "💛",
+  ],
+  [t("Find the North direction", "Find retningen mod nord"), "🧭"],
+  [t("Spot the first star", "Se den første stjerne"), "⭐"],
+  [t("Say good night to the campsite", "Sig godnat til campingpladsen"), "🌙"],
+] as const;
 const tasks: Task[] = [
   ...classic.map(([title, emoji], i) => ({
     id: `classic-${i}`,
@@ -417,16 +495,14 @@ const tasks: Task[] = [
     emoji,
     value: 1,
   })),
-  ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    .split("")
-    .map((letter) => ({
-      id: `letter-${letter}`,
-      category: "letters" as const,
-      title: t(`Find the letter ${letter}`, `Find bogstavet ${letter}`),
-      emoji: letter,
-      detail: t("On a licence plate", "På en nummerplade"),
-      value: 1,
-    })),
+  ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => ({
+    id: `letter-${letter}`,
+    category: "letters" as const,
+    title: t(`Find the letter ${letter}`, `Find bogstavet ${letter}`),
+    emoji: letter,
+    detail: t("On a licence plate", "På en nummerplade"),
+    value: 1,
+  })),
   ...countries.map(([title, code, emoji, value]) => ({
     id: `country-${code}`,
     category: "countries" as const,
@@ -456,12 +532,70 @@ const tasks: Task[] = [
     value: 1,
   })),
 ];
+const camperTasks: Task[] = [
+  ...camperClassic.map(([title, emoji], i) => ({
+    id: `camper-classic-${i}`,
+    category: "classic" as const,
+    title,
+    emoji,
+    value: 1,
+  })),
+  ...tasks
+    .filter(
+      (task) =>
+        task.category === "letters" ||
+        task.category === "countries" ||
+        task.category === "quiz",
+    )
+    .map((task) => ({ ...task, id: `camper-${task.id}` })),
+  ...camperFun.map(([title, emoji], i) => ({
+    id: `camper-fun-${i}`,
+    category: "fun" as const,
+    title,
+    emoji,
+    value: 1,
+  })),
+];
 const defaultPlayers: Player[] = [
   { id: "sun", name: "Team Sunshine", color: "#ff6b5f" },
   { id: "ocean", name: "Team Ocean", color: "#3157b7" },
   { id: "forest", name: "Team Forest", color: "#338b65" },
 ];
 const storageKey = "road-bingo-v2";
+
+function LanguageSwitch({
+  lang,
+  onChange,
+  dark = false,
+}: {
+  lang: Lang;
+  onChange: (value: Lang) => void;
+  dark?: boolean;
+}) {
+  return (
+    <div
+      className={`language-switch ${dark ? "is-dark" : ""}`}
+      aria-label="Language"
+    >
+      <button
+        type="button"
+        className={lang === "en" ? "is-active" : ""}
+        aria-pressed={lang === "en"}
+        onClick={() => onChange("en")}
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        className={lang === "da" ? "is-active" : ""}
+        aria-pressed={lang === "da"}
+        onClick={() => onChange("da")}
+      >
+        DA
+      </button>
+    </div>
+  );
+}
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>("en");
@@ -512,18 +646,31 @@ export default function Home() {
   useEffect(() => {
     setMessage(words.pick);
   }, [lang, words.pick]);
-  const shown = tasks.filter((task) => task.category === cat);
+  const gameTasks = gameType === "camper" ? camperTasks : tasks;
+  const shown = gameTasks.filter((task) => task.category === cat);
   const scores = useMemo(
     () =>
       players.map((player) => ({
         ...player,
-        score: tasks
+        score: gameTasks
           .filter((task) => done[task.id] === player.id)
           .reduce((sum, task) => sum + task.value, 0),
       })),
-    [done, players],
+    [done, gameTasks, players],
   );
   const current = categoryData.find((category) => category.id === cat)!;
+  const categoryLabel =
+    gameType === "camper" && cat === "classic"
+      ? words.camperClassic
+      : gameType === "camper" && cat === "fun"
+        ? words.camperFun
+        : words[current.label];
+  const categoryDescription =
+    gameType === "camper" && cat === "classic"
+      ? words.camperClassicDesc
+      : gameType === "camper" && cat === "fun"
+        ? words.camperFunDesc
+        : words[current.description];
   const claim = (task: Task) => {
     const owner = done[task.id];
     if (owner === active) {
@@ -548,12 +695,7 @@ export default function Home() {
           <img src="./og.png" alt="Illustrated Road Bingo road trip" />
           <div className="welcome-shade" />
           <div className="welcome-language">
-            <button
-              type="button"
-              onClick={() => setLang(lang === "en" ? "da" : "en")}
-            >
-              🌐 {words.language}
-            </button>
+            <LanguageSwitch lang={lang} onChange={setLang} dark />
           </div>
           <div className="welcome-copy">
             <p className="eyebrow">{words.introEyebrow}</p>
@@ -614,19 +756,13 @@ export default function Home() {
           <b>{gameType === "camper" ? words.camperLabel : words.carLabel}</b> ·{" "}
           {words.brand}
         </p>
-        <button
-          type="button"
-          className="language-button"
-          onClick={() => setLang(lang === "en" ? "da" : "en")}
-        >
-          🌐 {words.language}
-        </button>
+        <LanguageSwitch lang={lang} onChange={setLang} dark />
       </header>
       <section className="game-shell" aria-label={words.brand}>
         <div className="game-topline">
           <p>
-            <strong>{Object.keys(done).length}</strong> / {tasks.length}{" "}
-            {words.claimed}
+            <strong>{gameTasks.filter((task) => done[task.id]).length}</strong>{" "}
+            / {gameTasks.length} {words.claimed}
           </p>
           <button
             className="reset-button"
@@ -683,15 +819,23 @@ export default function Home() {
               <b>
                 {category.id === "letters"
                   ? category.short
-                  : words[category.label]}
+                  : gameType === "camper" && category.id === "classic"
+                    ? words.camperClassic
+                    : gameType === "camper" && category.id === "fun"
+                      ? words.camperFun
+                      : words[category.label]}
               </b>
               <small>
                 {
-                  tasks.filter(
+                  gameTasks.filter(
                     (task) => task.category === category.id && done[task.id],
                   ).length
                 }
-                /{tasks.filter((task) => task.category === category.id).length}
+                /
+                {
+                  gameTasks.filter((task) => task.category === category.id)
+                    .length
+                }
               </small>
             </button>
           ))}
@@ -699,8 +843,8 @@ export default function Home() {
         <section className="board">
           <div className="board-heading">
             <div>
-              <p className="eyebrow">{words[current.label].toUpperCase()}</p>
-              <h2>{words[current.description]}</h2>
+              <p className="eyebrow">{categoryLabel.toUpperCase()}</p>
+              <h2>{categoryDescription}</h2>
             </div>
             <p className="points-key">⭐ {words.points}</p>
           </div>
